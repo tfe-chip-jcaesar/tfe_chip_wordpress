@@ -56,3 +56,38 @@ module "eu_vpc" {
     aws = aws.eu-central-1
   }
 }
+
+# -----------------------------------------------------------------------------
+# Admin VPC Routes (Peering defined on Admin side)
+# -----------------------------------------------------------------------------
+
+data "terraform_remote_state" "admin" {
+  backend = "remote"
+
+  config = {
+    hostname     = "tfe.aws.shadowmonkey.com"
+    organization = "spacelysprockets"
+    workspaces = {
+      name = "tfe_chip_admin"
+    }
+  }
+}
+
+resource "aws_route" "us-admin" {
+  provider = aws.us-west-1
+  for_each = toset(module.us_vpc.route_tables)
+
+  route_table_id            = each.value
+  destination_cidr_block    = data.terraform_remote_state.admin.outputs.us_vpc_data.cidr
+  vpc_peering_connection_id = "pcx-02f8c5471fd0ed026"
+}
+
+resource "aws_route" "eu-admin" {
+  provider = aws.eu-central-1
+  for_each = toset(module.eu_vpc.route_tables)
+
+  route_table_id            = each.value
+  destination_cidr_block    = data.terraform_remote_state.admin.outputs.eu_vpc_data.cidr
+  vpc_peering_connection_id = "pcx-0ce1b07a53f100940"
+}
+
