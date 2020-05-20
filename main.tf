@@ -79,7 +79,7 @@ resource "aws_route" "us-admin" {
 
   route_table_id            = each.value
   destination_cidr_block    = data.terraform_remote_state.admin.outputs.us_vpc_data.cidr
-  vpc_peering_connection_id = "pcx-02f8c5471fd0ed026"
+  vpc_peering_connection_id = data.terraform_remote_state.admin.outputs.wp_us_pcx
 }
 
 resource "aws_route" "eu-admin" {
@@ -88,6 +88,6 @@ resource "aws_route" "eu-admin" {
 
   route_table_id            = each.value
   destination_cidr_block    = data.terraform_remote_state.admin.outputs.eu_vpc_data.cidr
-  vpc_peering_connection_id = "pcx-0ce1b07a53f100940"
+  vpc_peering_connection_id = data.terraform_remote_state.admin.outputs.wp_eu_pcx
 }
 
