@@ -160,7 +160,7 @@ module "us_wordpress" {
   common_tags = local.common_tags
   name        = "us_wordpress"
   size        = "t2.small"
-  subnet_id   = module.us_vpc.subnets.private.a.id
+  subnet_id   = module.us_vpc.subnets.public.a.id
   ssh_key     = aws_key_pair.jamie-wp.key_name
   vpc_id      = module.us_vpc.vpc_id
 
