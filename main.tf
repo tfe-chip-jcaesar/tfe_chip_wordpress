@@ -104,20 +104,67 @@ resource "aws_db_subnet_group" "wordpress" {
   tags = merge({ Name = "Wordpress" }, local.common_tags)
 }
 
-resource "aws_db_instance" "wordpress" {
-  provider             = aws.us-west-1
-  allocated_storage    = 20
-  storage_type         = "gp2"
-  apply_immediately    = true
-  db_subnet_group_name = aws_db_subnet_group.wordpress.name
-  deletion_protection  = false
-  engine               = "mysql"
-  engine_version       = "5.7"
-  instance_class       = "db.t2.micro"
-  name                 = "wordpress"
-  username             = "admin"
-  password             = "ThisAintSecure123!"
-  parameter_group_name = "default.mysql5.7"
-  multi_az             = true
+resource "aws_security_group" "wordpress" {
+  provider    = aws.us-west-1
+  name        = "sg_rds_wp"
+  description = "Security Group for Wordpress RDS"
+  vpc_id      = module.us_vpc.vpc_id
 
+  ingress {
+    description = "MYSQL"
+    from_port   = 3306
+    to_port     = 3306
+    protocol    = "tcp"
+    cidr_blocks = ["10.13.0.0/16"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge({ Name = "sg_rds_wp" }, local.common_tags)
+}
+
+resource "aws_db_instance" "wordpress" {
+  provider               = aws.us-west-1
+  allocated_storage      = 20
+  storage_type           = "gp2"
+  apply_immediately      = true
+  db_subnet_group_name   = aws_db_subnet_group.wordpress.name
+  deletion_protection    = false
+  engine                 = "mysql"
+  engine_version         = "5.7"
+  instance_class         = "db.t2.micro"
+  name                   = "wordpress"
+  username               = "admin"
+  password               = "ThisAintSecure123!"
+  parameter_group_name   = "default.mysql5.7"
+  multi_az               = true
+  vpc_security_group_ids = [module.us_wordpress.sg_name]
+}
+
+resource "aws_key_pair" "jamie-wp" {
+  provider   = aws.us-west-1
+  key_name   = "jamie-wordpress"
+  public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDKRqLi7AYYkDPqK09dtXtpXoV5tSL1iu1XA2wcYKe8TVUxi+sLY6XuOmD7E6NkSi70AtEqoANIsBQOSfYfc0yOX0Q30UAuQTW8SC3VAevtguxj6Yy18P/auokaLLgDvaYdlRNPdF74P0Tu21sn4Ak8rS4LjIqj3NcRKgn2Ng0SHHaY+opp4VWBnhBWWiNnz4A1Ul4Y1etmFp6BJVoLV51L7CK9XhYYHWx2uEUMyMP1Yz9raDRIlBxH7ulaw4rPfkVf9oLdE+BuD0VycoDv2GYf9gWSxZ31cQN5yZ5eUZyUKg8ZV1M+FQmDzsyL3P6R6QrI1ELUSMr0Qjgoz2tB9M3X"
+}
+
+module "us_wordpress" {
+  source  = "tfe.aws.shadowmonkey.com/spacelysprockets/wordpress/aws"
+  version = "0.0.3"
+
+  ami         = "ami-06fcc1f0bc2c8943f"
+  common_tags = local.common_tags
+  name        = "us_wordpress"
+  size        = "t2.small"
+  subnet_id   = module.us_vpc.subnets.private.a.id
+  ssh_key     = aws_key_pair.jamie-wp.key_name
+  vpc_id      = module.us_vpc.vpc_id
+
+  providers = {
+    aws = aws.us-west-1
+  }
 }
