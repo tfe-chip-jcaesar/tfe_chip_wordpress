@@ -143,7 +143,7 @@ resource "aws_db_instance" "wordpress" {
   password               = "ThisAintSecure123!"
   parameter_group_name   = "default.mysql5.7"
   multi_az               = true
-  vpc_security_group_ids = [module.us_wordpress.sg_name]
+  vpc_security_group_ids = [module.us_wordpress.sg_id]
 }
 
 resource "aws_key_pair" "jamie-wp" {
@@ -154,7 +154,7 @@ resource "aws_key_pair" "jamie-wp" {
 
 module "us_wordpress" {
   source  = "tfe.aws.shadowmonkey.com/spacelysprockets/wordpress/aws"
-  version = "0.0.3"
+  version = "0.0.4"
 
   ami         = "ami-06fcc1f0bc2c8943f"
   common_tags = local.common_tags
