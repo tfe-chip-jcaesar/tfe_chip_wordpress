@@ -91,3 +91,33 @@ resource "aws_route" "eu-admin" {
   vpc_peering_connection_id = data.terraform_remote_state.admin.outputs.wp_eu_pcx
 }
 
+
+# -----------------------------------------------------------------------------
+# RDS for Wordpress
+# -----------------------------------------------------------------------------
+
+resource "aws_db_subnet_group" "wordpress" {
+  provider   = aws.us-west-1
+  name       = "wordpress"
+  subnet_ids = module.us_vpc.subnet_ids.db
+
+  tags = merge({ Name = "Wordpress" }, local.common_tags)
+}
+
+resource "aws_db_instance" "wordpress" {
+  provider             = aws.us-west-1
+  allocated_storage    = 20
+  storage_type         = "gp2"
+  apply_immediately    = true
+  db_subnet_group_name = aws_db_subnet_group.wordpress.name
+  deletion_protection  = false
+  engine               = "mysql"
+  engine_version       = "5.7"
+  instance_class       = "db.t2.micro"
+  name                 = "wordpress"
+  username             = "admin"
+  password             = "ThisAintSecure123!"
+  parameter_group_name = "default.mysql5.7"
+  multi_az             = true
+
+}

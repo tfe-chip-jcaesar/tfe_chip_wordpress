@@ -1,5 +1,14 @@
 terraform {
   required_version = "~> 0.12"
+
+  backend "remote" {
+    hostname     = "tfe.aws.shadowmonkey.com"
+    organization = "spacelysprockets"
+
+    workspaces {
+      name = "tfe_chip_wordpress"
+    }
+  }
 }
 
 provider "aws" {
